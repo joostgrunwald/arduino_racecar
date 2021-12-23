@@ -35,6 +35,7 @@ LOLIN_I2C_MOTOR motor(DEFAULT_I2C_MOTOR_ADDRESS); //I2C address 0x30 SEE NOTE BE
 //SETTINGS//
 ////////////
 bool serial = false;
+bool memory = true;
 
 // variables for the duration of sound wave travel
 long duration1;
@@ -119,14 +120,17 @@ Tinn tinn;
 //gets called once when running code at the beginning
 void setup()
 {
-    //setup memory
-    EEPROM.begin(512);
-
-    //we fill the memory with 246 values
-    //this way if we read 246 we know we reached the end of output
-    for (int i = 0; i < 512; i++)
+    if (memory == true)
     {
-        EEPROM.write(i, 246)
+        //setup memory
+        EEPROM.begin(512);
+
+        //we fill the memory with 246 values
+        //this way if we read 246 we know we reached the end of output
+        for (int i = 0; i < 512; i++)
+        {
+            EEPROM.write(i, 246)
+        }
     }
 
     //delay so the car doesn't take off out of nowhere
@@ -292,6 +296,21 @@ void loop()
         Serial.println(steering);
         Serial.println("power");
         Serial.println(power);
+    }
+
+    if (memory == true)
+    {
+        //if end of memory reached, start over
+        if (address == 512)
+        {
+            //write number to show this happened in output
+            EEPROM.write(0, 214);
+            address = 1;
+        }
+        //write steering to first address
+        EEPROM.write(address, steering);
+        //write power to next address
+        EEPROM.write(address + 1, power);
     }
 
     motor.changeDuty(MOTOR_CH_B, power);
