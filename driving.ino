@@ -129,7 +129,18 @@ void setup()
             int ste = EEPROM.read(i);
             int pow = EEPROM.read(i + 1);
 
-            //TODO: filter out 246 values??
+            //if cycle completed
+            if (i == 0 || ste = 214)
+            {
+                Serial.println("FILLED CYCLE DETECTED!!!!!!");
+            }
+
+            //if value reachted bounds, exit loop
+            if (ste == 246)
+            {
+                break;
+            }
+
             Serial.println("STEERING");
             Serial.println(ste);
             Serial.println("POWER");
@@ -328,7 +339,7 @@ void loop()
         {
             //write number to show this happened in output
             EEPROM.write(0, 214);
-            address = 1;
+            address = 2;
         }
         //write steering to first address
         EEPROM.write(address, steering);
