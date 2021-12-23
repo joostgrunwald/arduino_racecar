@@ -117,6 +117,13 @@ void setup()
     //setup memory
     EEPROM.begin(512);
 
+    //we fill the memory with 246 values
+    //this way if we read 246 we know we reached the end of output
+    for (int i = 0; i < 512; i++)
+    {
+        EEPROM.write(i, 246)
+    }
+
     //delay so the car doesn't take off out of nowhere
     delay(10000);
 
