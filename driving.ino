@@ -176,7 +176,7 @@ void setup()
     }
 
     //delay so the car doesn't take off out of nowhere
-    delay(10000);
+    delay(8000);
 
     //pinmode settings
     pinMode(trigPin1, OUTPUT); // Sets the trigPin as an OUTPUT
