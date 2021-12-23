@@ -31,6 +31,11 @@ LOLIN_I2C_MOTOR motor(DEFAULT_I2C_MOTOR_ADDRESS); //I2C address 0x30 SEE NOTE BE
 #define HID_NODES 7
 #define OUT_NODES 2
 
+////////////
+//SETTINGS//
+////////////
+bool serial = false;
+
 // variables for the duration of sound wave travel
 long duration1;
 long duration2;
@@ -152,8 +157,11 @@ void setup()
         tinn.w[j] = weights[j];
 
     //User Interface
-    Serial.println("VERSTAPPEN SETUP COMPLETE");
-    Serial.println("Happy Racing Max!");
+    if (serial == true)
+    {
+        Serial.println("VERSTAPPEN SETUP COMPLETE");
+        Serial.println("Happy Racing Max!");
+    }
 }
 
 float *predict_output(int dis1, int dis2, int dis3, int dis4, int dis5)
@@ -278,10 +286,13 @@ void loop()
     int power = int(out[1] * 100);
 
     //DEBUG output of neural network
-    Serial.println("steering");
-    Serial.println(steering);
-    Serial.println("power");
-    Serial.println(power);
+    if (serial == true)
+    {
+        Serial.println("steering");
+        Serial.println(steering);
+        Serial.println("power");
+        Serial.println(power);
+    }
 
     motor.changeDuty(MOTOR_CH_B, power);
 }
