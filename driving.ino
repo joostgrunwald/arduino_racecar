@@ -54,6 +54,9 @@ int distance5;
 //which address we are going to write to in the EEPROM
 int address = 0;
 
+//whether or not we have crashed and should hence stope telemetrics
+bool crashed = false;
+
 //distance one 4bit measure is measured in
 int edgedist = 11;
 
@@ -138,6 +141,13 @@ void setup()
             //if value reachted bounds, exit loop
             if (ste == 246)
             {
+                break;
+            }
+
+            //if vehicle crashed, exit loop
+            if (ste == 219 || pow == 219)
+            {
+                Serial.println("THE VEHICLE CRASHED!!!!!");
                 break;
             }
 
@@ -271,7 +281,7 @@ void loop()
     distance4 = duration4 * 0.034 / 2;
     distance5 = duration5 * 0.034 / 2;
 
-    //TODO: outlierdetection for all 5??
+    //TODO: write outlierdetection for all 5??
 
     //4bit conversion
     distance1 = turn_to_4bit(distance1);
@@ -313,13 +323,18 @@ void loop()
     //make steering of range [0, 100]
     steering = steering * 2;
 
-    if (out[0] != 0)
-    {
-        motor.changeDuty(MOTOR_CH_A, steering);
-    }
+    motor.changeDuty(MOTOR_CH_A, steering);
 
     //create power value
     int power = int(out[1] * 100);
+
+    if (power == 0)
+    {
+        crashed = true;
+    }
+
+    //communicate power to motor
+    motor.changeDuty(MOTOR_CH_B, power);
 
     //DEBUG output of neural network
     if (serial == true)
@@ -328,11 +343,9 @@ void loop()
         Serial.println(steering);
         Serial.println("power");
         Serial.println(power);
-
-        //TODO detect when to stop writing, to make sure we don't overwrite data
     }
 
-    if (memory == true)
+    if (memory == true || crashed == false)
     {
         //if end of memory reached, start over
         if (address == 512)
@@ -349,6 +362,20 @@ void loop()
         //commit
         EEPROM.commit();
     }
+    else if (crashed == true || memory == true)
+    {
+        //if end of memory reached, start over
+        if (address == 512)
+        {
+            //write number to show this happened in output
+            EEPROM.write(0, 214);
+            address = 2;
+        }
 
-    motor.changeDuty(MOTOR_CH_B, power);
+        //crash message
+        EEPROM.write(address, 219);
+
+        //commit
+        EEPROM.commit();
+    }
 }
