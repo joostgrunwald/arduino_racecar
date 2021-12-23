@@ -131,6 +131,9 @@ void setup()
         {
             EEPROM.write(i, 246)
         }
+
+        //save
+        EEPROM.commit();
     }
 
     //delay so the car doesn't take off out of nowhere
@@ -311,6 +314,9 @@ void loop()
         EEPROM.write(address, steering);
         //write power to next address
         EEPROM.write(address + 1, power);
+
+        //commit
+        EEPROM.commit();
     }
 
     motor.changeDuty(MOTOR_CH_B, power);
