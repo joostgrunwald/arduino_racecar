@@ -6,8 +6,13 @@ extern "C"
 
 using namespace std;
 #include <string>
+
+//memory
 #include <Wire.h>
 #include <LOLIN_I2C_MOTOR.h>
+
+//memory
+#include <EEPROM.h>
 
 //engine
 #define PWM_FREQUENCY 1000
@@ -39,6 +44,9 @@ int distance2;
 int distance3;
 int distance4;
 int distance5;
+
+//which address we are going to write to in the EEPROM
+int address = 0;
 
 //distance one 4bit measure is measured in
 int edgedist = 11;
@@ -106,6 +114,8 @@ Tinn tinn;
 //gets called once when running code at the beginning
 void setup()
 {
+    //setup memory
+    EEPROM.begin(512);
 
     //delay so the car doesn't take off out of nowhere
     delay(10000);
