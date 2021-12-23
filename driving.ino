@@ -34,7 +34,7 @@ LOLIN_I2C_MOTOR motor(DEFAULT_I2C_MOTOR_ADDRESS); //I2C address 0x30 SEE NOTE BE
 ////////////
 //SETTINGS//
 ////////////
-bool serial = false;
+bool serial = true;
 bool memory = true;
 
 // variables for the duration of sound wave travel
@@ -120,6 +120,24 @@ Tinn tinn;
 //gets called once when running code at the beginning
 void setup()
 {
+    //memory read
+    if (serial == true)
+    {
+        for (int i = 0; i < 216; i = i + 2)
+        {
+            // TODO: is there a problem if memory is empty and we try to read it????
+            int ste = EEPROM.read(i);
+            int pow = EEPROM.read(i + 1);
+
+            //TODO: filter out 246 values??
+            Serial.println("STEERING");
+            Serial.println(ste);
+            Serial.println("POWER");
+            Serial.println(pow);
+        }
+    }
+
+    //memory reset
     if (memory == true)
     {
         //setup memory
@@ -129,7 +147,7 @@ void setup()
         //this way if we read 246 we know we reached the end of output
         for (int i = 0; i < 512; i++)
         {
-            EEPROM.write(i, 246)
+            EEPROM.write(i, 246);
         }
 
         //save
@@ -299,6 +317,8 @@ void loop()
         Serial.println(steering);
         Serial.println("power");
         Serial.println(power);
+
+        //TODO detect when to stop writing, to make sure we don't overwrite data
     }
 
     if (memory == true)
