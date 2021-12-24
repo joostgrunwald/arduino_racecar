@@ -7,7 +7,7 @@ extern "C"
 using namespace std;
 #include <string>
 
-//memory
+//motor
 #include <Wire.h>
 #include <LOLIN_I2C_MOTOR.h>
 
@@ -49,7 +49,7 @@ int distance1;
 int distance2;
 int distance3;
 int distance4;
-int distance5;
+int distance5 = 0;
 
 //which address we are going to write to in the EEPROM
 int address = 0;
@@ -58,7 +58,7 @@ int address = 0;
 bool crashed = false;
 
 //distance one 4bit measure is measured in
-int edgedist = 11;
+int edgedist = 18;
 
 //pre trained biases to load into the neural network
 float biases[] = {
@@ -66,55 +66,56 @@ float biases[] = {
 
 //pre trained weights to load into the neural network
 float weights[] = {
-    2.506542,
-    -6.167351,
-    3.076371,
-    9.333115,
-    4.089797,
-    0.301825,
-    0.458969,
-    -0.288023,
-    -0.089155,
-    0.376617,
-    -0.564076,
-    0.343862,
-    -0.399771,
-    -0.173858,
-    0.373769,
-    4.540301,
-    0.267299,
-    6.579165,
-    0.196806,
-    -4.433230,
-    -1.436299,
-    -1.257108,
-    1.385680,
-    0.921490,
-    -1.217654,
-    0.528074,
-    -0.156684,
-    0.634125,
-    3.112460,
-    1.306892,
-    6.221663,
-    -0.042466,
-    -0.407600,
-    -1.396802,
-    -2.716314,
-    -3.441118,
-    1.018185,
-    1.610596,
-    -5.823295,
-    8.275008,
-    -3.115408,
-    7.649559,
-    0.636142,
-    7.771691,
-    -3.960641,
-    -0.190234,
-    2.008600,
-    -4.902290,
-    -2.285367,
+  -1.353206, -1.144721, -1.534024, 4.552975, 4.313193, -3.452873, -3.525798, -1.213497, -5.115411, -3.141104, 2.816752, -3.988078, -4.040601, 3.185037, 2.281164, 1.142817, 3.582944, 2.883088, 3.877965, 3.575855, -1.444307, 0.216100, -0.085072, -0.573343, -0.102276, 1.347645, -2.953274, -1.953251, 5.553272, 5.076849, 1.233514, -2.774449, -4.557082, 1.605104, 0.452765, -6.916440, -6.596384, 3.146082, 5.136613, 1.361658, -5.477478, 3.917717, -2.063781, -0.178655, -4.185128, -2.750510, 3.857427, 3.385339, 3.657549
+//    2.506542,
+//    -6.167351,
+//    3.076371,
+//    9.333115,
+//    4.089797,
+//    0.301825,
+//    0.458969,
+//    -0.288023,
+//    -0.089155,
+//    0.376617,
+//    -0.564076,
+//    0.343862,
+//    -0.399771,
+//    -0.173858,
+//    0.373769,
+//    4.540301,
+//    0.267299,
+//    6.579165,
+//    0.196806,
+//    -4.433230,
+//    -1.436299,
+//    -1.257108,
+//    1.385680,
+//    0.921490,
+//    -1.217654,
+//    0.528074,
+//    -0.156684,
+//    0.634125,
+//    3.112460,
+//    1.306892,
+//    6.221663,
+//    -0.042466,
+//    -0.407600,
+//    -1.396802,
+//    -2.716314,
+//    -3.441118,
+//    1.018185,
+//    1.610596,
+//    -5.823295,
+//    8.275008,
+//    -3.115408,
+//    7.649559,
+//    0.636142,
+//    7.771691,
+//    -3.960641,
+//    -0.190234,
+//    2.008600,
+//    -4.902290,
+//    -2.285367,
 };
 
 //an instance of tinn, short for tiny neural network
@@ -133,7 +134,7 @@ void setup()
             int pow = EEPROM.read(i + 1);
 
             //if cycle completed
-            if (i == 0 || ste = 214)
+            if (i == 0 || ste == 214)
             {
                 Serial.println("FILLED CYCLE DETECTED!!!!!!");
             }
@@ -192,7 +193,7 @@ void setup()
     Serial.begin(115200);
 
     // Setup the neural network structures, as defined in defines
-    tinn = xtbuild(IN_NODES, HIDDEN_NODES, OUT_NODES);
+    tinn = xtbuild(IN_NODES, HID_NODES, OUT_NODES);
 
     //fill in the biases
     for (int i = 0; i < tinn.nb; i++)
@@ -202,7 +203,7 @@ void setup()
     for (int j = 0; j < tinn.nw; j++)
         tinn.w[j] = weights[j];
 
-    //User Interface
+    //User Interface 
     if (serial == true)
     {
         Serial.println("VERSTAPPEN SETUP COMPLETE");
@@ -217,11 +218,11 @@ float *predict_output(int dis1, int dis2, int dis3, int dis4, int dis5)
     float verstappen_inputs[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
 
     //inputs are the 5 sensor distances
-    verstappen_inputs[1] = dis1;
+    verstappen_inputs[1] = dis4;
     verstappen_inputs[2] = dis2;
     verstappen_inputs[3] = dis3;
-    verstappen_inputs[4] = dis4;
-    verstappen_inputs[5] = dis5;
+    verstappen_inputs[4] = dis1;
+    verstappen_inputs[5] = 0;
 
     //feed the inputs to the neural network
     return xtpredict(tinn, verstappen_inputs);
@@ -256,39 +257,131 @@ int turn_to_4bit(int dist)
 
 void loop()
 {
-    Serial.println("test1");
-    //SENSOR SECTION
-    // Clears the trigPin condition
+//    //SENSOR SECTION
+//    // Clears the trigPin condition
+//    digitalWrite(trigPin1, LOW);
+//    delayMicroseconds(2);
+//    // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
+//    digitalWrite(trigPin1, HIGH);
+//    delayMicroseconds(10);
+//    digitalWrite(trigPin1, LOW);
+
+//    // Reads the echoPin, returns the sound wave travel time in microseconds
+//    duration1 = pulseIn(echoPin1, HIGH);
+//
+//
+
+    
     digitalWrite(trigPin1, LOW);
     delayMicroseconds(2);
     // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
     digitalWrite(trigPin1, HIGH);
     delayMicroseconds(10);
     digitalWrite(trigPin1, LOW);
-    Serial.println("test2");
 
-    // Reads the echoPin, returns the sound wave travel time in microseconds
-    duration1 = pulseIn(echoPin1, HIGH);
-    duration2 = pulseIn(echoPin2, HIGH);
-    duration3 = pulseIn(echoPin3, HIGH);
-    duration4 = pulseIn(echoPin4, HIGH);
-    duration5 = pulseIn(echoPin5, HIGH);
+    duration4 = pulseIn(echoPin4, HIGH, 100000);
+    
+    digitalWrite(trigPin1, LOW);
+    delayMicroseconds(2);
+    // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
+    digitalWrite(trigPin1, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin1, LOW);
+
+    delayMicroseconds(100);
+
+    duration2 = pulseIn(echoPin2, HIGH, 100000);    
+
+    digitalWrite(trigPin1, LOW);
+    delayMicroseconds(2);
+    // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
+    digitalWrite(trigPin1, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin1, LOW);
+
+    delayMicroseconds(100);
+
+    duration1 = pulseIn(echoPin1, HIGH, 100000);  
+
+  
+    digitalWrite(trigPin1, LOW);
+    delayMicroseconds(2);
+    // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
+    digitalWrite(trigPin1, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin1, LOW);
+//    
+//    delayMicroseconds(50);
+//    digitalWrite(trigPin1, LOW);
+//    delayMicroseconds(2);
+//    // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
+//    digitalWrite(trigPin1, HIGH);
+//    delayMicroseconds(10);
+//    digitalWrite(trigPin1, LOW);
+//    
+      duration3 = pulseIn(echoPin3, HIGH);
+
+//    delayMicroseconds(10);
+//    // Clears the trigPin condition
+//    digitalWrite(trigPin1, LOW);
+//    delayMicroseconds(2);
+//    // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
+//    digitalWrite(trigPin1, HIGH);
+//    delayMicroseconds(10);
+//    digitalWrite(trigPin1, LOW);
+//
+//    // Reads the echoPin, returns the sound wave travel time in microseconds
+//    duration1 = pulseIn(echoPin1, HIGH);    
+//    digitalWrite(trigPin1, LOW);
+//    delayMicroseconds(2);
+//    // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
+//    digitalWrite(trigPin1, HIGH);
+//    delayMicroseconds(10);
+//    digitalWrite(trigPin1, LOW);
+//    
+//    duration5 = pulseIn(echoPin5, HIGH);
 
     // Calculating the distance
-    distance1 = duration1 * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
-    distance2 = duration2 * 0.034 / 2;
-    distance3 = duration3 * 0.034 / 2;
     distance4 = duration4 * 0.034 / 2;
-    distance5 = duration5 * 0.034 / 2;
+    distance2 = duration2 * 0.034 / 2;
+    distance1 = duration1 * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
+    distance3 = duration3 * 0.034 / 2;
 
-    //TODO: write outlierdetection for all 5??
+    //outlierdetection
+    if (distance1 == 0)
+    {
+      distance1 = 200;
+    }
+    if (distance2 == 0)
+    {
+      distance2 = 200;
+    }
+    if (distance3 == 0)
+    {
+      distance3 = 200;
+    }
+    if (distance4 == 0)
+    {
+      distance4 = 200;
+    }
+    if (distance5 == 0)
+    {
+      distance5 = 200;
+    }
 
-    //4bit conversion
-    distance1 = turn_to_4bit(distance1);
-    distance2 = turn_to_4bit(distance2);
-    distance3 = turn_to_4bit(distance3);
-    distance4 = turn_to_4bit(distance4);
-    distance5 = turn_to_4bit(distance5);
+//    //4bit conversion
+    distance1 = turn_to_binary(distance1);
+    distance2 = turn_to_binary(distance2);
+    distance3 = turn_to_binary(distance3);
+    distance4 = turn_to_binary(distance4);
+    distance5  = turn_to_binary(distance5);
+
+    //M, L, LL, R, RR
+      Serial.println(distance4);
+      Serial.println(distance2);
+      Serial.println(distance1);
+      Serial.println(distance3);
+      Serial.println("Sensors end");
 
     //save output of the neural network into out, so we can use it to drive the actual car
     float *out = predict_output(distance1, distance2, distance3, distance4, distance5);
@@ -321,12 +414,12 @@ void loop()
     }
 
     //make steering of range [0, 100]
-    steering = steering * 2;
+    steering = steering * 20; //* 10s
 
     motor.changeDuty(MOTOR_CH_A, steering);
 
     //create power value
-    int power = int(out[1] * 100);
+    int power = int(out[1] * 20);
 
     if (power == 0)
     {
@@ -343,39 +436,5 @@ void loop()
         Serial.println(steering);
         Serial.println("power");
         Serial.println(power);
-    }
-
-    if (memory == true || crashed == false)
-    {
-        //if end of memory reached, start over
-        if (address == 512)
-        {
-            //write number to show this happened in output
-            EEPROM.write(0, 214);
-            address = 2;
-        }
-        //write steering to first address
-        EEPROM.write(address, steering);
-        //write power to next address
-        EEPROM.write(address + 1, power);
-
-        //commit
-        EEPROM.commit();
-    }
-    else if (crashed == true || memory == true)
-    {
-        //if end of memory reached, start over
-        if (address == 512)
-        {
-            //write number to show this happened in output
-            EEPROM.write(0, 214);
-            address = 2;
-        }
-
-        //crash message
-        EEPROM.write(address, 219);
-
-        //commit
-        EEPROM.commit();
     }
 }
